@@ -77,7 +77,7 @@ main{padding:0 16px}
 .stats b{display:block;font-size:20px;font-weight:800}
 .stats span{font-size:13px;color:var(--muted)}
 h3{margin:24px 4px 8px;font-size:16px}
-.yr{display:grid;grid-template-columns:1fr auto;width:100%;text-align:left;background:var(--card);border:2px solid transparent;
+.yr{color:var(--ink);display:grid;grid-template-columns:1fr auto;width:100%;text-align:left;background:var(--card);border:2px solid transparent;
   border-radius:14px;padding:14px;margin-bottom:8px;font:inherit;cursor:pointer;min-height:48px}
 .yr.on{border-color:var(--blue)}
 .yr b{font-weight:800}
@@ -224,10 +224,12 @@ $('#main').addEventListener('click',async e=>{
   if(e.target.id==='sv'){const n=new Date(),p=x=>String(x).padStart(2,'0');
     const name=`bugatti-cafe-${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())}.json`;
     const f=new File([JSON.stringify(data,null,2)],name,{type:'application/json'});
+    const dl=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('Ficheiro guardado em Transferências')};
     try{
-      if(navigator.canShare?.({files:[f]})){await navigator.share({files:[f],title:name});toast('Ficheiro partilhado')}
-      else{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('Ficheiro guardado em Transferências')}
-    }catch(err){if(err?.name!=='AbortError')toast('Não foi possível guardar o ficheiro',true)}}
+      if(window.showSaveFilePicker){const h=await showSaveFilePicker({suggestedName:name,types:[{description:'Cópia Bugatti Café',accept:{'application/json':['.json']}}]});const w=await h.createWritable();await w.write(f);await w.close();toast('Ficheiro guardado')}
+      else if(navigator.canShare?.({files:[f]})){try{await navigator.share({files:[f],title:name});toast('Ficheiro partilhado')}catch(er){if(er?.name==='AbortError')return;dl()}}
+      else dl();
+    }catch(err){if(err?.name==='AbortError')return;try{dl()}catch{toast(`Não foi possível guardar o ficheiro (${err?.name||'erro'})`,true)}}}
 });
 $('#main').addEventListener('change',e=>{if(e.target.id!=='rf'||!e.target.files[0])return;
   const r=new FileReader();r.onload=()=>restore(String(r.result));r.readAsText(e.target.files[0]);e.target.value=''});
